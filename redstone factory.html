@@ -3,11 +3,77 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Redstone Factory</title>
-        <link rel="stylesheet" type="text/css" href="css/styles.css">
-        <script type="text/javascript" src="js/main.js"></script>
+        <title>Recom Simulation :D</title>
+        <link rel="stylesheet" type="text/css" href="css/default.css">
+        <script type="text/javascript" src="js/Component_logic.js"></script>
     </head>
     <body>
-        <!--here-->
+        <div class="container">
+            <h1><u>Recom Simulation</u></h1>
+            
+            <button style="display : none; margin: 20px 0; background-color: rgb(211, 104, 104)" id="wupdate" onclick="wUpdate()">Update (∞)</button>
+            <button style="margin: 20px 0;" id="oupdate" onclick="update()">Update (spam)</button>
+            <button style="margin: 20px 0;" id="clear" onclick="reset()">Clear</button>
+            
+            <h3>Block Palette - Click to Select</h3>
+
+            <!-- Block palette (row.number) -->
+            <div class="block-palette" id="blockPalette">
+                <!-- 1.1 Redstone Block -->
+                <div class="options" data-opt="redstone_block" title="Redstone Block">
+                    <img src="images/redstone_block_1234_1_off.png" alt="Redstone Block">
+                </div>
+
+                <!-- 1.2 Redstone Dust -->
+                <div class="options" data-opt="redstone_dust" title="Redstone Dust">
+                    <img src="images/redstone_dust_1234_1_off.png" alt="Redstone Dust">
+                </div>
+                
+                <!-- 1.3 Redstone Repeator -->
+                <div style = "display: none;" class="options" data-opt="redstone_repeator" title="Redstone Repeator">
+                    <img src="images/redstone_repeator_31_1_off.png" alt="Redstone Repeator">
+                </div>
+
+                <!-- 1.4 Redstone Comparator -->
+                <div style = "display: none;" class="options" data-opt="redstone_comparator" title="Redstone Comparator">
+                    <img src="images/redstone_comparator_31_1_off.png" alt="Redstone Comparator">
+                </div>
+
+                <!-- 1.5 Redstone Lamp -->
+                <div class="options" data-opt="redstone_lamp" title="Redstone Lamp">
+                    <img src="images/redstone_lamp_1234_1_off.png" alt="Redstone Lamp">
+                </div>
+
+                <!-- 2.10 Cobblestone -->
+                <div class="options" data-opt="cobblestone" title="Cobblestone">
+                    <img src="images/cobblestone_1234_1_off.png" alt="Cobblestone">
+                </div>
+
+                <!-- 2.11 Air -->
+                <div class="options" data-opt="air" title="Air">
+                    <img src="images/air_1234_1_off.png" alt="Air">
+                </div>
+
+                <!-- 2.01 Placeholder -->
+                <div style = "display: none;" class = "block-placeholder"></div> 
+                <div style = "display: none;" class = "block-placeholder"></div> 
+                <div style = "display: none;" class = "block-placeholder"></div> 
+
+                <!-- 3.12 Stick -->
+                <div class="options" data-opt="stick" title="Stick">
+                    <img src="images/stick.png" alt="Stick">
+                </div>
+
+                <!-- 3.13 Book -->
+                <div class="options" data-opt="book" title="Book">
+                    <img src="images/book.png" alt="Book">
+                </div>
+            </div>
+
+            <!-- Grid generation -->
+            <div class="placement-grid" id="placementGrid"></div>
+            
+        </div>
     </body>
 </html>
+			

@@ -1,0 +1,117 @@
+    body {
+        font-family: 'Courier New', monospace;
+        color: rgb(46, 46, 46);
+        text-align: center;
+        padding: 10px;
+        margin: 15px;
+    }
+    
+    .container {
+        max-width: 500px;
+        margin: 0 auto;
+    }
+    
+    h1 {
+        color: rgb(46, 46, 46);
+        margin-bottom: 5px;
+    }
+
+    h3 {
+        margin-top: 5px;
+    }
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover; /* or contain, fill, etc. */
+    }
+
+    /*//SECTION block options*/
+    .block-palette {
+        display: grid;
+        grid-template-columns: repeat(7, 50px);
+        gap: 10px;
+        justify-content: center;
+        margin-bottom: 15px;
+        padding: 20px;
+        background-color: #2a2a2a;
+        border-radius: 10px;
+    }
+    
+    .options {
+        width: 50px;
+        height: 50px;
+        border: 2px solid transparent;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .options:hover {
+        transform: scale(1.1);
+        border-color: #fff;
+    }
+    
+    .options.selected {
+        border-color: #ffffff;
+        border-width: 3px;
+        transform: scale(1.1);
+        box-shadow: 0 0 10px #ffffff;
+    }
+    /*//!SECTION */
+    
+
+    /*//SECTION block grid*/
+    .placement-grid {
+        padding: 15px;
+        background-color: #3f3f3f;
+        border-radius: 10px;
+        display: grid;
+        grid-template-columns: repeat(6, 60px);
+        grid-template-rows: repeat(6, 60px);
+        gap: 5px;
+        justify-content: center;
+        margin-bottom: 30px;
+    }
+    
+    .grid-cell {
+        width: 60px;
+        height: 60px;
+        background-color: #3a3a3a;
+        border: 2px solid #555;
+        border-radius: 3px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .grid-cell:hover {
+        transform: scale(1.1);
+        border-color: #fff;
+    }
+
+    .grid-cell.selected {
+        border-color: #ffffff;
+        border-width: 3px;
+        transform: scale(1.1);
+        box-shadow: 0 0 10px #ffffff;
+        z-index: 1;
+        position: relative;
+    }
+    /*//!SECTION */
+
+    
+    button {
+        background-color: rgb(188, 188, 188);
+        color: rgb(46, 46, 46);
+        border: none;
+        padding: 10px 20px;
+        margin: 0 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: background-color 0.2s ease;
+    }
+    
+    button:hover {
+        background-color: #848484;
+    }
