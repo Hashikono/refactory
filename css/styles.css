@@ -70,8 +70,9 @@
         background-color: #3f3f3f;
         border-radius: 10px;
         display: grid;
-        grid-template-columns: repeat(var(--grid-sizey), 60px);
-        grid-template-rows: repeat(var(--grid-sizex), 60px);
+        /* columns correspond to gridX, rows correspond to gridY */
+        grid-template-columns: repeat(var(--grid-sizex), 60px);
+        grid-template-rows: repeat(var(--grid-sizey), 60px);
         gap: 5px;
         justify-content: center;
         margin-bottom: 30px;
