@@ -330,20 +330,36 @@ function genBlock(block,y,x){
 //blocksV1 for setting genBlocks & original data | blocksV2 for updating data and immediately copying it over
 var blocksV1;
 var blocksV2;
+//grid values
+var gridX = 6;
+var gridY = 6;
 //when testing the puzzle (exclusive)
-var testP = false;
-blocksV1 = Array.from({length:6}, () => Array.from({length:6}, () => genEmptyBlock()));
-blocksV2 = Array.from({length:6}, () => Array.from({length:6}, () => genEmptyBlock()));
+var testP = false; // grid initialisation happens once the DOM is ready (see window.onload)
+
+blocksV1 = Array.from({length:gridY}, () => Array.from({length:gridX}, () => genEmptyBlock()));
+blocksV2 = Array.from({length:gridY}, () => Array.from({length:gridX}, () => genEmptyBlock()));
 
 //selection variables
 var selectedOption = null;
 var selectedBlock = null;
 
+//sets grid count
+function setGridCount(y,x){
+    gridY = y;
+    gridX = x;
+    // update CSS variables on the placement grid element if it exists
+    const gridEl = document.getElementById("placementGrid");
+    if (gridEl) {
+        gridEl.style.setProperty('--grid-sizey', y);
+        gridEl.style.setProperty('--grid-sizex', x);
+    }
+}
+
 //clear button
 function reset(){
     console.log("Block reset!");
-    blocksV1 = Array.from({length:6}, () => Array.from({length:6}, () => genEmptyBlock()));
-    blocksV2 = Array.from({length:6}, () => Array.from({length:6}, () => genEmptyBlock()));
+    blocksV1 = Array.from({length:gridY}, () => Array.from({length:gridX}, () => genEmptyBlock()));
+    blocksV2 = Array.from({length:gridY}, () => Array.from({length:gridX}, () => genEmptyBlock()));
     selectionRemoval();
     update();
 }
@@ -494,8 +510,8 @@ function implement(){
     const grid = document.getElementById("placementGrid");
     grid.innerHTML = '';
     //adds stuff to the div
-    for (let r = 0; r < 6; r++){
-        for (let c = 0; c < 6; c++){
+    for (let r = 0; r < gridY; r++){
+        for (let c = 0; c < gridX; c++){
             //cell division
             const cell = document.createElement("div");
             cell.className = "grid-cell";
@@ -523,7 +539,12 @@ function supdate(){
 
 
 //Initial loading of content
-window.onload = (() => {update(); console.log("Content Initial load!")});
+window.onload = (() => {
+    // ensure the CSS grid variables reflect the current dimensions
+    setGridCount(gridY, gridX);
+    update();
+    console.log("Content Initial load!");
+});
 
 //main activity detection and updating
 document.addEventListener("DOMContentLoaded", function () {
@@ -654,7 +675,7 @@ Block Ref: new Block(blockType(str), direction(int), state(int), imgPower(str), 
 
 Function Ref: genEmptyBlock() | genBlock(block,y,x) | edgeIdentifier(y,x) | ePowertest(y,x) | selectionRemoval() | updateSurrounding(y,x) | successfulPath(neighY, neighX, y, x)
 
-Implementation Ref: update() | implement() | reset() | conUpdate()
+Implementation Ref: setGridCount(y,x) | (s)update() | implement() | reset() | conUpdate()
 
 */
 
@@ -742,7 +763,7 @@ function redstone_dust_update(y,x){ //DONE
             }
 
             //checking neighboring blocks
-            if (neighY < 0 || neighY >= 6 || neighX < 0 || neighX >= 6) continue;
+            if (neighY < 0 || neighY >= gridY || neighX < 0 || neighX >= gridX) continue;
             const neighbor = blocksV1[neighY][neighX];
             let powerProvision = false;
             let neighborPower = 0;
