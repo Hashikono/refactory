@@ -156,11 +156,11 @@ class Block { //blockType(str), direction(int), state(int), imgPower(str), ports
     //tests if the block has power (e/r)
     powerTest(x) { //boolean
         //tests and updates ePower
-        if (x == "e" && (this.getNorthPort().getEPower() || this.getEastPort().getEPower() || this.getSouthPort().getEPower() || this.getWestPort().getEPower())){
-            this.getNorthPort().setEPower(true);
-            this.getEastPort().setEPower(true);
-            this.getSouthPort().setEPower(true);
-            this.getWestPort().setEPower(true);
+        if (x == "e"){
+            //this.getNorthPort().setEPower(true);
+            //this.getEastPort().setEPower(true);
+            //this.getSouthPort().setEPower(true);
+            //this.getWestPort().setEPower(true);
             return true;
         }
 
@@ -330,6 +330,8 @@ function genBlock(block,y,x){
 //blocksV1 for setting genBlocks & original data | blocksV2 for updating data and immediately copying it over
 var blocksV1;
 var blocksV2;
+//when testing the puzzle (exclusive)
+var testP = false;
 blocksV1 = Array.from({length:6}, () => Array.from({length:6}, () => genEmptyBlock()));
 blocksV2 = Array.from({length:6}, () => Array.from({length:6}, () => genEmptyBlock()));
 
@@ -373,62 +375,17 @@ function edgeIdentifier(y,x){
 }
 
 //tests ePower on surrounding blocks
-//REVIEW Review tracing algorithm to look for redundancies
 function ePowerTest(y,x){
-    let power = false;
-
-    //checks if block is cobblestone
-    if (blocksV1[y][x].getBlockType() == "cobblestone"){
-        power = true;
+    if (testP = true){
+        return true;
+    } else {
+        return false;
     }
-    else {
-        //cobblestone traceback
-        let testBlocks = edgeIdentifier(y,x);
-        for (const direction of testBlocks){
-            let neighY = y;
-            let neighX = x;
-            switch(direction){
-                case "1": neighY = y-1; break;
-                case "2": neighX = x+1; break;
-                case "3": neighY = y+1; break;
-                case "4": neighX = x-1; break;
-            }
-
-            //coordinate validation
-            if (neighY < 0 || neighY >= 6 || neighX < 0 || neighX >= 6) continue;
-
-            //connection checking
-            const neighboring = blocksV1[neighY][neighX];
-            if (neighboring.getBlockType() != "air"){
-                //successful connection tracker
-                let sConnect = false;
-                switch(direction) {
-                    case "1": sConnect = neighboring.getSouthPort().getEPower(); break;
-                    case "2": sConnect = neighboring.getWestPort().getEPower(); break;
-                    case "3": sConnect = neighboring.getNorthPort().getEPower(); break;
-                    case "4": sConnect = neighboring.getEastPort().getEPower(); break;
-                }
-                //successful connection establishment
-                if (sConnect){
-                    if (successfulPath(neighY, neighX, y, x, new Set())){
-                        power = true;
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
-    //setting and returning power result
-    blocksV2[y][x].getNorthPort().setEPower(power);
-    blocksV2[y][x].getEastPort().setEPower(power);
-    blocksV2[y][x].getSouthPort().setEPower(power);
-    blocksV2[y][x].getWestPort().setEPower(power);
-    return power;
 }
 
 //ePowerTest path succession tester
 function successfulPath(cobbleY, cobbleX, y, x, visited){
+    return true;
     //recursion stuff for tracebacks
     const coor = `${cobbleY},${cobbleX}`;
     if (visited.has(coor)) return false;
@@ -559,6 +516,12 @@ function implement(){
 
 
 //SECTION Onsite processes
+function supdate(){
+    testP = true;
+    update();
+}
+
+
 //Initial loading of content
 window.onload = (() => {update(); console.log("Content Initial load!")});
 
@@ -701,7 +664,7 @@ function air_update(y,x){ //DONE
 
 function redstone_block_update(y,x){ //DONE
     blocksV2[y][x] = blocksV1[y][x].clone();
-    if (!ePowerTest(y,x)){
+    if (!testP){
         //no ePower (turns off dust)
         blocksV2[y][x].getNorthPort().setEPower(false);
         blocksV2[y][x].getEastPort().setEPower(false);
@@ -756,7 +719,7 @@ function redstone_dust_update(y,x){ //DONE
         }
 
 
-    if (ePowerTest(y,x)){
+    if (testP){
         //Max rPower establishment (applies to next 50 something lines of code)
         let rPowMax = 0;
         //power source existence
@@ -917,14 +880,14 @@ function redstone_dust_update(y,x){ //DONE
 
 function redstone_repeator_update(y,x){
     blocksV2[y][x] = blocksV1[y][x].clone();
-    if (ePowerTest(y,x)){
+    if (testP){
         //
     }
 }
 
 function redstone_comparator_update(y,x){
     blocksV2[y][x] = blocksV1[y][x].clone();
-    if (ePowerTest(y,x)){
+    if (testP){
         //
     }
 }
@@ -933,7 +896,7 @@ function redstone_comparator_update(y,x){
 function redstone_lamp_update(y,x){ //DONE
     blocksV2[y][x] = blocksV1[y][x].clone();
     let dirTest = edgeIdentifier(y,x);
-    if (ePowerTest(y,x)){
+    if (testP){
         //track outputs
         let outputList = ["1","2","3","4"];
         //Max rPower establishment (applies to next 50 something lines of code)
