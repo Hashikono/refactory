@@ -1,0 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=Jacquard+24&display=swap');
+body {
+        font-family: 'Jackquard 24', system-ui;
+        color: rgb(46, 46, 46);
+        text-align: center;
+        padding: 10px;
+        background-image: url("../assets/background.png");
+        background-size: cover;
+        justify-content: center;
+        align-items: center;
+        background-repeat: no-repeat;
+    }
+h1  {
+    color: red;
+    align-content: center;
+    font-family: "Jacquard 24", system-ui;
+    font-weight: 400;
+    font-style: normal;
+    font-size: 5rem;
+    }
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
