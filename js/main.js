@@ -571,9 +571,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     //block substitution
     function blockSubstitution(){
-        //console.log("block substituted")
-        //console.log("selected option", selectedOption);
-        //console.log("selected block", selectedBlock);
         const rows = parseInt(selectedBlock.dataset.row);
         const cols = parseInt(selectedBlock.dataset.col);
         const optData = selectedOption.dataset.opt;
