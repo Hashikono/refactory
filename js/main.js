@@ -314,25 +314,108 @@ function genBlock(block,y,x){
         //NOTE remove later:
         return new Block(block, 1234, 1, "off", "images/air_1234_1_off.png", [new Port(false, 0, surBlock[0], "none", false), new Port(false, 0, surBlock[1], "none", false), new Port(false, 0, surBlock[2], "none", false), new Port(false, 0, surBlock[3], "none", false)]);
     }
-    //REVIEW Add interaction
-    else if (block == "book"){
-        if (blocksV1[y][x].getBlockType() == "redstone_repeator"){
+    // …existing code…
+    // …existing code…
+    else if (block === "book") {
+        const orig = blocksV1[y][x].getBlockType();          // keep the thing
+        if (orig === "redstone_repeator") {
+            let newDir, img, ports;
+            if (blocksV1[y][x].getDirection() === 31) {
+                newDir = 42;
+                img   = "images/redstone_repeator_42_1_off.png";
+                ports = [
+                    new Port(false,0,surBlock[0],"none",false),
+                    new Port(false,0,surBlock[1],"output",true),
+                    new Port(false,0,surBlock[2],"none",false),
+                    new Port(false,0,surBlock[3],"input",true)
+                ];
+            } else if (blocksV1[y][x].getDirection() === 42) {
+                newDir = 13;
+                img   = "images/redstone_repeator_13_1_off.png";
+                ports = [
+                    new Port(false,0,surBlock[0],"input",true),
+                    new Port(false,0,surBlock[1],"none",false),
+                    new Port(false,0,surBlock[2],"output",true),
+                    new Port(false,0,surBlock[3],"none",false)
+                ];
+            } else if (blocksV1[y][x].getDirection() === 13) {
+                newDir = 24;
+                img   = "images/redstone_repeator_24_1_off.png";
+                ports = [
+                    new Port(false,0,surBlock[0],"none",false),
+                    new Port(false,0,surBlock[1],"input",true),
+                    new Port(false,0,surBlock[2],"none",false),
+                    new Port(false,0,surBlock[3],"output",true)
+                ];
+            } else if (blocksV1[y][x].getDirection() === 24) {
+                newDir = 31;
+                img   = "images/redstone_repeator_31_1_off.png";
+                ports = [
+                    new Port(false,0,surBlock[0],"output",true),
+                    new Port(false,0,surBlock[1],"none",false),
+                    new Port(false,0,surBlock[2],"input",true),
+                    new Port(false,0,surBlock[3],"none",false)
+                ];
+            }
+            // <<< return the rotated repeater
+            return new Block(orig, newDir, 1, "off", img, ports);
 
+        } else if (orig === "redstone_comparator") {
+            let newDir, img, ports;
+            const dir = blocksV1[y][x].getDirection();
+            if (dir === 31) {
+                newDir = 42;
+                img   = "images/redstone_comparator_42_1_off.png";
+                ports = [
+                    new Port(false,0,surBlock[0],"none",false),
+                    new Port(false,0,surBlock[1],"output",true),
+                    new Port(false,0,surBlock[2],"input",true),
+                    new Port(false,0,surBlock[3],"input",true)
+                ];
+            } else if (dir === 42) {
+                newDir = 13;
+                img   = "images/redstone_comparator_13_1_off.png";
+                ports = [
+                    new Port(false,0,surBlock[0],"input",true),
+                    new Port(false,0,surBlock[1],"none",false),
+                    new Port(false,0,surBlock[2],"output",true),
+                    new Port(false,0,surBlock[3],"input",true)
+                ];
+            } else if (dir === 13) {
+                newDir = 24;
+                img   = "images/redstone_comparator_24_1_off.png";
+                ports = [
+                    new Port(false,0,surBlock[0],"input",true),
+                    new Port(false,0,surBlock[1],"input",true),
+                    new Port(false,0,surBlock[2],"none",false),
+                    new Port(false,0,surBlock[3],"output",true)
+                ];
+            } else { // dir === 24
+                newDir = 31;
+                img   = "images/redstone_comparator_31_1_off.png";
+                ports = [
+                    new Port(false,0,surBlock[0],"output",true),
+                    new Port(false,0,surBlock[1],"input",true),
+                    new Port(false,0,surBlock[2],"input",true),
+                    new Port(false,0,surBlock[3],"none",false)
+                ];
+            }
+            // <<< return the rotated comparator
+            return new Block(orig, newDir, 1, "off", img, ports);
         }
-        else if (blocksV1[y][x].getBlockType() == "redstone_comparator"){
 
-        }
-        //NOTE remove later:
-        return new Block(block, 1234, 1, "off", "images/air_1234_1_off.png", [new Port(false, 0, surBlock[0], "none", false), new Port(false, 0, surBlock[1], "none", false), new Port(false, 0, surBlock[2], "none", false), new Port(false, 0, surBlock[3], "none", false)]);
+        // anything else – do nothing
+        return blocksV1[y][x].clone();
     }
+// …existing code…
 }
 
 //blocksV1 for setting genBlocks & original data | blocksV2 for updating data and immediately copying it over
 var blocksV1;
 var blocksV2;
 //grid values
-var gridX = 6;
-var gridY = 6;
+var gridX = 10;
+var gridY = 10;
 //when testing the puzzle (exclusive)
 var testP = false; // grid initialisation happens once the DOM is ready (see window.onload)
 
@@ -343,16 +426,22 @@ blocksV2 = Array.from({length:gridY}, () => Array.from({length:gridX}, () => gen
 var selectedOption = null;
 var selectedBlock = null;
 
-//sets grid count
+//sets grid count (rows, cols)
 function setGridCount(y,x){
     gridY = y;
     gridX = x;
+    // regenerate block arrays to match new dimensions
+    blocksV1 = Array.from({length:gridY}, () => Array.from({length:gridX}, () => genEmptyBlock()));
+    blocksV2 = Array.from({length:gridY}, () => Array.from({length:gridX}, () => genEmptyBlock()));
     // update CSS variables on the placement grid element if it exists
     const gridEl = document.getElementById("placementGrid");
     if (gridEl) {
-        gridEl.style.setProperty('--grid-sizey', y);
-        gridEl.style.setProperty('--grid-sizex', x);
+        gridEl.style.setProperty('--grid-sizey', gridY); // number of rows
+        gridEl.style.setProperty('--grid-sizex', gridX); // number of columns
     }
+    // clear any existing selection and refresh display
+    selectionRemoval();
+    update();
 }
 
 //clear button
@@ -383,9 +472,13 @@ function updateSurrounding(y,x){
 //tests and returns for available directions
 function edgeIdentifier(y,x){
     let dirAvail = ["1","2","3","4"];
+    // north
     if (y-1 < 0) dirAvail.splice(dirAvail.indexOf("1"),1);
-    if (x+1 > 5) dirAvail.splice(dirAvail.indexOf("2"),1);
-    if (y+1 > 5) dirAvail.splice(dirAvail.indexOf("3"),1);
+    // east
+    if (x+1 >= gridX) dirAvail.splice(dirAvail.indexOf("2"),1);
+    // south
+    if (y+1 >= gridY) dirAvail.splice(dirAvail.indexOf("3"),1);
+    // west
     if (x-1 < 0) dirAvail.splice(dirAvail.indexOf("4"),1);
     return dirAvail;
 }
@@ -501,7 +594,7 @@ function update(){
     
     blocksV1 = blocksV2.map(row => row.map(bloc => bloc.clone()));
     implement();
-    console.log("blocksV1[0]:", blocksV1[0]);
+    console.log("blocksV1[1]:", blocksV1[1]);
 }   
 
 //Implements the blocks list into the grid (HTML creation)
@@ -542,7 +635,7 @@ function supdate(){
 window.onload = (() => {
     // ensure the CSS grid variables reflect the current dimensions
     setGridCount(gridY, gridX);
-    update();
+    // update() is already called inside setGridCount
     console.log("Content Initial load!");
 });
 
@@ -900,20 +993,131 @@ function redstone_dust_update(y,x){ //DONE
 }
 
 function redstone_repeator_update(y,x){
+    /*
+    block, 31, 1, "off", 
+            "images/redstone_repeator_31_1_off.png", 
+            [
+                new Port(false, 0, surBlock[0], "output", true), 
+                new Port(false, 0, surBlock[1], "none", false), 
+                new Port(false, 0, surBlock[2], "input", true), 
+                new Port(false, 0, surBlock[3], "none", false)
+            ] 
+    When book is used:
+    direction{ 31 => 42 => 13 => 24}
+    type
+    */
     blocksV2[y][x] = blocksV1[y][x].clone();
+    //sets repeator directionional power
     if (testP){
-        //
+        let dirTest = edgeIdentifier(y,x);
+        //direction priority - testing priority in surrounding blocks
+        let dirPrior = [];
+
+        if (dirTest.includes("1") && blocksV1[y-1][x].getSouthPort().getPrior()) dirPrior.push("1");
+        if (dirTest.includes("2") && blocksV1[y][x+1].getWestPort().getPrior()) dirPrior.push("2");
+        if (dirTest.includes("3") && blocksV1[y+1][x].getNorthPort().getPrior()) dirPrior.push("3");
+        if (dirTest.includes("4") && blocksV1[y][x-1].getEastPort().getPrior()) dirPrior.push("4");
+        blocksV2[y][x].setImgPower("on");
+        if (blocksV1[y][x].getDirection() == 31 && dirTest.includes("3") && blocksV1[y+1][x].getNorthPort().getRPower() > 0){
+            blocksV2[y][x].getNorthPort().setRPower(15); 
+            blocksV2[y][x].getEastPort().setRPower(0);
+            blocksV2[y][x].getSouthPort().setRPower(0);
+            blocksV2[y][x].getWestPort().setRPower(0);
+        } else if (blocksV1[y][x].getDirection() == 42 && dirTest.includes("4") && blocksV1[y][x-1].getEastPort().getRPower() > 0){
+            blocksV2[y][x].getNorthPort().setRPower(0); 
+            blocksV2[y][x].getEastPort().setRPower(15);
+            blocksV2[y][x].getSouthPort().setRPower(0);
+            blocksV2[y][x].getWestPort().setRPower(0);
+        } else if (blocksV1[y][x].getDirection() == 13 && dirTest.includes("1") && blocksV1[y-1][x].getSouthPort().getRPower() > 0){
+            blocksV2[y][x].getNorthPort().setRPower(0); 
+            blocksV2[y][x].getEastPort().setRPower(0);
+            blocksV2[y][x].getSouthPort().setRPower(15);
+            blocksV2[y][x].getWestPort().setRPower(0);
+        } else if (blocksV1[y][x].getDirection() == 24 && dirTest.includes("2") && blocksV1[y][x+1].getWestPort().getRPower() > 0){
+            blocksV2[y][x].getNorthPort().setRPower(0); 
+            blocksV2[y][x].getEastPort().setRPower(0);
+            blocksV2[y][x].getSouthPort().setRPower(0);
+            blocksV2[y][x].getWestPort().setRPower(15);
+        } else {
+            blocksV2[y][x].getNorthPort().setRPower(0); 
+            blocksV2[y][x].getEastPort().setRPower(0);
+            blocksV2[y][x].getSouthPort().setRPower(0);
+            blocksV2[y][x].getWestPort().setRPower(0);
+            blocksV2[y][x].setImgPower("off");
+        }
     }
 }
 
+// …existing code…
 function redstone_comparator_update(y,x){
     blocksV2[y][x] = blocksV1[y][x].clone();
     if (testP){
-        //
+        let dirTest = edgeIdentifier(y,x);
+        const dir = blocksV1[y][x].getDirection();
+
+        // helpers to avoid out‑of‑bounds checks in every case
+        const north = () => blocksV1[y-1] && blocksV1[y-1][x];
+        const east  = () => blocksV1[y][x+1];
+        const south = () => blocksV1[y+1] && blocksV1[y+1][x];
+        const west  = () => blocksV1[y][x-1];
+
+        let backPower = 0, side1 = 0, side2 = 0;
+
+        if (dir === 31) {               // output north
+            if (dirTest.includes("3") && south()) backPower = south().getNorthPort().getRPower();
+            if (dirTest.includes("2") && east())  side1     = east().getWestPort().getRPower();
+            if (dirTest.includes("4") && west())  side2     = west().getEastPort().getRPower();
+
+            if (backPower > 0 && backPower > side1 && backPower > side2) {
+                blocksV2[y][x].getNorthPort().setRPower(backPower);
+                blocksV2[y][x].setImgPower("on");
+            } else {
+                blocksV2[y][x].getNorthPort().setRPower(0);
+                blocksV2[y][x].setImgPower("off");
+            }
+        }
+        else if (dir === 42) {          // output east
+            if (dirTest.includes("4") && west())  backPower = west().getEastPort().getRPower();
+            if (dirTest.includes("1") && north()) side1     = north().getSouthPort().getRPower();
+            if (dirTest.includes("3") && south()) side2     = south().getNorthPort().getRPower();
+
+            if (backPower > 0 && backPower > side1 && backPower > side2) {
+                blocksV2[y][x].getEastPort().setRPower(backPower);
+                blocksV2[y][x].setImgPower("on");
+            } else {
+                blocksV2[y][x].getEastPort().setRPower(0);
+                blocksV2[y][x].setImgPower("off");
+            }
+        }
+        else if (dir === 13) {          // output south
+            if (dirTest.includes("1") && north()) backPower = north().getSouthPort().getRPower();
+            if (dirTest.includes("2") && east())  side1     = east().getWestPort().getRPower();
+            if (dirTest.includes("4") && west())  side2     = west().getEastPort().getRPower();
+
+            if (backPower > 0 && backPower > side1 && backPower > side2) {
+                blocksV2[y][x].getSouthPort().setRPower(backPower);
+                blocksV2[y][x].setImgPower("on");
+            } else {
+                blocksV2[y][x].getSouthPort().setRPower(0);
+                blocksV2[y][x].setImgPower("off");
+            }
+        }
+        else if (dir === 24) {          // output west
+            if (dirTest.includes("2") && east())  backPower = east().getWestPort().getRPower();
+            if (dirTest.includes("1") && north()) side1     = north().getSouthPort().getRPower();
+            if (dirTest.includes("3") && south()) side2     = south().getNorthPort().getRPower();
+
+            if (backPower > 0 && backPower > side1 && backPower > side2) {
+                blocksV2[y][x].getWestPort().setRPower(backPower);
+                blocksV2[y][x].setImgPower("on");
+            } else {
+                blocksV2[y][x].getWestPort().setRPower(0);
+                blocksV2[y][x].setImgPower("off");
+            }
+        }
     }
 }
 
-//REVIEW Fix travelling stuff between regular blocks... (only need to worry about note blocks and other redstone lamps honestly)
 function redstone_lamp_update(y,x){ //DONE
     blocksV2[y][x] = blocksV1[y][x].clone();
     let dirTest = edgeIdentifier(y,x);
