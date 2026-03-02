@@ -414,8 +414,8 @@ function genBlock(block,y,x){
 var blocksV1;
 var blocksV2;
 //grid values
-var gridX = 10;
-var gridY = 10;
+var gridX = 6;
+var gridY = 6;
 //when testing the puzzle (exclusive)
 var testP = false; // grid initialisation happens once the DOM is ready (see window.onload)
 
@@ -646,17 +646,6 @@ document.addEventListener("DOMContentLoaded", function () {
     //PLAcement grid element 
     let pla = document.getElementById("placementGrid");
 
-    //block substitution
-    function blockSubstitution(){
-        const rows = parseInt(selectedBlock.dataset.row);
-        const cols = parseInt(selectedBlock.dataset.col);
-        const optData = selectedOption.dataset.opt;
-        blocksV1[rows][cols] = genBlock(optData, rows, cols);
-        //console.log("blocksV1 @ update place", blocksV1[rows][cols]);
-        //console.log("whats supposed to happen",genBlock(optData, rows, cols));
-        update();
-    }
-
     //selection manager - options palette
     opt.addEventListener("click", function(opt) {
         //initial element test (if outside; removes all selected)
@@ -680,17 +669,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
         //NOTE match instance (option-side)
         if(selectedBlock){
-            blockSubstitution();
+            // Use the global blockSubstitution function instead of the local one
+            window.blockSubstitution();
             if(selectedBlock) selectedBlock.classList.remove("selected");
             selectedBlock = null;
         }
-
-        //console.log("Selected option", option.dataset.opt)
     });
 
     //selection manager - block grid
     pla.addEventListener("click", function(bloc) {
-        //console.log("BLOCK grid event listener activated")
         //initial element test (if outside; removes all selected)
         const block = bloc.target.closest(".grid-cell");
         if(!block) {
@@ -712,12 +699,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
         //NOTE match instance (block-side)
         if(selectedOption){
-            blockSubstitution();
+            // Use the global blockSubstitution function instead of the local one
+            window.blockSubstitution();
             if(selectedBlock) selectedBlock.classList.remove("selected");
             selectedBlock = null;
         }
-
-        //console.log("Selected block", block.dataset.row, block.dataset.col)
     });
 
     //background option removal
@@ -1425,10 +1411,667 @@ function cobblestone_update(y,x){ //DONE
     }
 }
 
+//----------------------- Level System ------------------------
+const levels = [
+    {
+        id: 1,
+        name: "Basics",
+        description: "Connect the redstone block to the lamp",
+        gridY: 6,
+        gridX: 4,
+        startBlocks: [
+            { y: 0, x: 0, type: "redstone_block" },
+            { y: 0, x: 3, type: "redstone_lamp" }
+        ],
+        locked: [],
+        inventory: {
+            redstone_dust: 2,
+            redstone_repeator: 0,
+            redstone_comparator: 0,
+            redstone_lamp: 0,
+            cobblestone: 0,
+            redstone_block: 0
+        },
+        winCondition: {
+            type: "lamp_lit",
+            y: 0,
+            x: 3
+        }
+    },
+    {
+        id: 2,
+        name: "Severed Wires",
+        description: "Power the lamp...",
+        gridY: 6,
+        gridX: 6,
+        startBlocks: [
+            { y: 0, x: 0, type: "redstone_block" },
+            { y: 5, x: 5, type: "redstone_lamp" }
+        ],
+        locked: [],
+        inventory: {
+            redstone_dust: 8,
+            redstone_repeator: 2,
+            redstone_comparator: 0,
+            redstone_lamp: 0,
+            cobblestone: 0,
+            redstone_block: 0
+        },
+        winCondition: {
+            type: "lamp_lit",
+            y: 5,
+            x: 5
+        }
+    },
+    {
+        id: 3,
+        name: "Comparator assembly",
+        description: "Power the lamp...",
+        gridY: 6,
+        gridX: 6,
+        startBlocks: [
+            { y: 0, x: 0, type: "redstone_block" },
+            { y: 5, x: 5, type: "redstone_lamp" }
+        ],
+        locked: [
+            { y: 5, x: 4, type: "cobblestone" },
+            { y: 4, x: 5, type: "cobblestone" }
+        ],
+        inventory: {
+            redstone_dust: 6,
+            redstone_repeator: 0,
+            redstone_comparator: 3,
+            redstone_lamp: 0,
+            cobblestone: 0,
+            redstone_block: 0
+        },
+        winCondition: {
+            type: "lamp_lit",
+            y: 5,
+            x: 5
+        }
+    },
+    {
+        id: 4,
+        name: "The OBL files",
+        description: "",
+        gridY: 8,
+        gridX: 8,
+        startBlocks: [
+            { y: 0, x: 0, type: "redstone_block" },
+            { y: 6, x: 6, type: "redstone_lamp" }
+        ],
+        locked: [],
+        inventory: {
+            redstone_dust: 2,
+            redstone_repeator: 2,
+            redstone_comparator: 2,
+            redstone_lamp: 0,
+            cobblestone: 50,
+            redstone_block: 0
+        },
+        winCondition: {
+            type: "lamp_lit",
+            y: 6,
+            x: 6
+        }
+    }
+];
 
+// Game state variables
+let lockedCells = new Set();
+let currentLevel = null;
+let currentLevelIndex = -1;
+let inventory = {};
+let levelBackup = null;
+let levelSelectInitialized = false;
 
+//----------------------- Level Loading ------------------------
 
+function loadLevel(index) {
+    if (index < 0 || index >= levels.length) {
+        console.error("Invalid level index:", index);
+        return false;
+    }
+    
+    console.log(`Loading level ${index + 1}...`);
+    
+    // Update current level
+    currentLevelIndex = index;
+    currentLevel = levels[index];
+    
+    // Update level description
+    const descEl = document.getElementById("levelDescription");
+    if (descEl) {
+        descEl.innerHTML = `<strong>Level ${currentLevel.id}: ${currentLevel.name}</strong><br>${currentLevel.description}`;
+    }
+    
+    // Update active button state
+    document.querySelectorAll('.level-btn').forEach((btn, i) => {
+        if (i === index) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+    
+    // Set grid dimensions
+    setGridCount(currentLevel.gridY, currentLevel.gridX);
+    
+    // Clear locked cells
+    lockedCells.clear();
+    
+    // Initialize empty grid
+    blocksV1 = Array.from({length: currentLevel.gridY}, () => 
+        Array.from({length: currentLevel.gridX}, () => genEmptyBlock())
+    );
+    
+    // Place start blocks
+    if (currentLevel.startBlocks && currentLevel.startBlocks.length > 0) {
+        currentLevel.startBlocks.forEach(block => {
+            if (block.y < currentLevel.gridY && block.x < currentLevel.gridX) {
+                blocksV1[block.y][block.x] = genBlock(block.type, block.y, block.x);
+                
+                // Set direction if specified
+                if (block.direction !== undefined) {
+                    blocksV1[block.y][block.x].setDirection(block.direction);
+                }
+            }
+        });
+    }
+    
+    // Place locked blocks
+    if (currentLevel.locked && currentLevel.locked.length > 0) {
+        currentLevel.locked.forEach(block => {
+            if (block.y < currentLevel.gridY && block.x < currentLevel.gridX) {
+                blocksV1[block.y][block.x] = genBlock(block.type, block.y, block.x);
+                lockedCells.add(`${block.y},${block.x}`);
+                
+                // Set direction if specified
+                if (block.direction !== undefined) {
+                    blocksV1[block.y][block.x].setDirection(block.direction);
+                }
+            }
+        });
+    }
+    
+    // Initialize inventory
+    inventory = { ...currentLevel.inventory };
+    
+    // Sync blocksV2
+    blocksV2 = blocksV1.map(row => 
+        row.map(block => block.clone())
+    );
+    
+    // Create backup
+    createLevelBackup();
+    
+    // Update displays
+    selectionRemoval();
+    updateInventoryDisplay();
+    update();
+    return true;
+}
 
+function createLevelBackup() {
+    if (!currentLevel) return;
+    
+    levelBackup = {
+        blocks: blocksV1.map(row => row.map(block => block.clone())),
+        inventory: { ...inventory },  // Saves the initial inventory
+        lockedCells: new Set(lockedCells)
+    };
+}
+function resetLevel() {
+    if (!levelBackup || currentLevelIndex === -1) {
+        console.log("No level to reset");
+        return;
+    }
+    
+    console.log(`Resetting level ${currentLevel.id}`);
+    
+    // Restore blocks from backup
+    blocksV1 = levelBackup.blocks.map(row => 
+        row.map(block => block.clone())
+    );
+    
+    // Restore inventory from backup (this replenishes everything)
+    inventory = { ...levelBackup.inventory };
+    
+    // Restore locked cells
+    lockedCells = new Set(levelBackup.lockedCells);
+    
+    // Sync blocksV2
+    blocksV2 = blocksV1.map(row => 
+        row.map(block => block.clone())
+    );
+    
+    // Update displays
+    selectionRemoval();
+    updateInventoryDisplay();
+    update();
+    hideMessages();
+    
+    console.log("Inventory replenished:", inventory);
+}
+
+// Update inventory display and palette visibility
+function updateInventoryDisplay() {
+    // Update palette item visibility and count badges
+    document.querySelectorAll('.options[data-opt]').forEach(option => {
+        const optType = option.dataset.opt;
+        
+        // Skip book and air (always available)
+        if (optType === 'book' || optType === 'air') {
+            option.classList.remove('inventory-empty');
+            return;
+        }
+        
+        const count = inventory[optType] || 0;
+        const badge = document.getElementById(`count-${optType}`);
+        
+        if (badge) {
+            badge.textContent = count;
+            
+            // Update badge color based on count
+            if (count <= 0) {
+                badge.style.background = '#8b0000'; // Red for empty
+            } else {
+                badge.style.background = '#4CAF50'; // Green for available
+            }
+        }
+        
+        // Add/remove empty class for visual feedback
+        if (count <= 0) {
+            option.classList.add('inventory-empty');
+        } else {
+            option.classList.remove('inventory-empty');
+        }
+    });
+}
+
+// Format item name for display
+function formatItemName(item) {
+    return item.split('_').map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+}
+
+//----------------------- Submit & Victory ------------------------
+
+function submitSolution() {
+    if (!currentLevel) {
+        alert("No level loaded!");
+        return;
+    }
+    
+    console.log("⚡ Submitting solution...");
+    showProcessing(true);
+    
+    // Turn on test mode
+    testP = true;
+    
+    // Simulate redstone propagation (50 updates)
+    let updates = 0;
+    const maxUpdates = 50;
+    
+    function runUpdate() {
+        if (updates < maxUpdates) {
+            update();
+            updates++;
+            setTimeout(runUpdate, 30); // Small delay for visual feedback
+        } else {
+            // Finished all updates, check victory
+            setTimeout(checkVictory, 100);
+        }
+    }
+    
+    runUpdate();
+}
+
+function checkVictory() {
+    showProcessing(false);
+    
+    if (!currentLevel) return;
+    
+    const winCond = currentLevel.winCondition;
+    let victory = false;
+    
+    // Check win condition
+    if (winCond.type === "lamp_lit") {
+        const lamp = blocksV1[winCond.y][winCond.x];
+        victory = (lamp && 
+                  lamp.getBlockType() === "redstone_lamp" && 
+                  lamp.getImgPower() === "on");
+    }
+    
+    // Turn off test mode
+    testP = false;
+    
+    if (victory) {
+        console.log(`Circuit ${currentLevel.id} complete!`);
+        showVictoryMessage(); // This now handles both message and level advance
+    } else {
+        showFailureMessage();
+        console.log("Still broken...");
+    }
+}
+
+//----------------------- UI Functions ------------------------
+
+function showProcessing(show) {
+    let indicator = document.getElementById("processingIndicator");
+    if (!indicator) {
+        indicator = document.createElement("div");
+        indicator.id = "processingIndicator";
+        indicator.textContent = "Booting up...";
+        document.body.appendChild(indicator);
+    }
+    indicator.style.display = show ? "block" : "none";
+}
+
+function showVictoryMessage() {
+    hideMessages();
+    
+    const msg = document.createElement("div");
+    msg.id = "victoryMessage";
+    msg.className = "victory-message";
+    msg.innerHTML = `
+        <div style="background: #818181; color: white; padding: 20px; border-radius: 10px; text-align: center;">
+            <h2>Circuit fixed...</h2>
+            <p>Moving on...</p>
+        </div>
+    `;
+    msg.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 1000;
+        animation: fadeIn 0.5s;
+    `;
+    document.body.appendChild(msg);
+    
+    // Message disappears after 3 seconds, then move to next level
+    setTimeout(() => {
+        msg.remove();
+        
+        // Move to next level after message is gone
+        if (currentLevelIndex < levels.length - 1) {
+            loadLevel(currentLevelIndex + 1);
+        } else {
+            showGameComplete();
+        }
+    }, 3000);
+}
+
+function showFailureMessage() {
+    hideMessages();
+    
+    const msg = document.createElement("div");
+    msg.id = "failureMessage";
+    msg.className = "failure-message";
+    msg.innerHTML = `
+        <div style="background: #a70b00; color: white; padding: 15px; border-radius: 10px; text-align: center;">
+            <p>Try again, still broken,</p>
+        </div>
+    `;
+    msg.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+        animation: slideIn 0.3s;
+    `;
+    document.body.appendChild(msg);
+    
+    setTimeout(() => msg.remove(), 2000);
+}
+
+function showGameComplete() {}
+
+function hideMessages() {
+    const victoryMsg = document.getElementById("victoryMessage");
+    const failureMsg = document.getElementById("failureMessage");
+    if (victoryMsg) victoryMsg.remove();
+    if (failureMsg) failureMsg.remove();
+}
+
+//----------------------- Initialize Level Selector ------------------------
+
+function initializeLevelSelector() {
+    if (levelSelectInitialized) return;
+    
+    const selector = document.getElementById("levelSelector");
+    if (!selector) return;
+    
+    // Clear any existing buttons
+    selector.innerHTML = "";
+    
+    // Create level buttons
+    levels.forEach((level, index) => {
+        const btn = document.createElement("button");
+        btn.className = "level-btn";
+        btn.textContent = `Level ${level.id}`;
+        btn.title = level.name;
+        btn.onclick = () => loadLevel(index);
+        selector.appendChild(btn);
+    });
+    
+    levelSelectInitialized = true;
+    console.log("Level selector initialized");
+}
+
+//----------------------- Override Global Functions ------------------------
+
+// Override reset
+window.reset = function() {
+    resetLevel();
+};
+
+// Override blockSubstitution to handle book rotation and air placement
+window.blockSubstitution = function() {
+    const r = +selectedBlock.dataset.row;
+    const c = +selectedBlock.dataset.col;
+    
+    // Check if cell is locked
+    if (lockedCells.has(`${r},${c}`)) {
+        alert("This block is fixed and cannot be changed!");
+        return;
+    }
+    
+    const optData = selectedOption.dataset.opt;
+    
+    // Handle book rotation
+    if (optData === 'book') {
+        const currentBlock = blocksV1[r][c];
+        const blockType = currentBlock.getBlockType();
+        
+        // Only rotate repeaters and comparators
+        if (blockType === 'redstone_repeator' || blockType === 'redstone_comparator') {
+            // Rotate the block using genBlock with same position
+            const rotatedBlock = genBlock(blockType, r, c);
+            
+            // Get current direction and cycle to next
+            const currentDir = currentBlock.getDirection();
+            let newDir;
+            
+            // Direction cycling: 31 -> 42 -> 13 -> 24 -> back to 31
+            if (currentDir === 31) newDir = 42;
+            else if (currentDir === 42) newDir = 13;
+            else if (currentDir === 13) newDir = 24;
+            else if (currentDir === 24) newDir = 31;
+            else newDir = 31; // Default if unknown
+            
+            rotatedBlock.setDirection(newDir);
+            
+            // Update the ports based on new direction
+            if (blockType === 'redstone_repeator') {
+                // Update repeater ports based on new direction
+                const surBlock = [
+                    (r > 0) ? blocksV1[r-1][c].getBlockType() : "air",
+                    (c < gridX-1) ? blocksV1[r][c+1].getBlockType() : "air",
+                    (r < gridY-1) ? blocksV1[r+1][c].getBlockType() : "air",
+                    (c > 0) ? blocksV1[r][c-1].getBlockType() : "air"
+                ];
+                
+                if (newDir === 31) { // North output
+                    rotatedBlock.portsList = [
+                        new Port(false, 0, surBlock[0], "output", true),
+                        new Port(false, 0, surBlock[1], "none", false),
+                        new Port(false, 0, surBlock[2], "input", true),
+                        new Port(false, 0, surBlock[3], "none", false)
+                    ];
+                } else if (newDir === 42) { // East output
+                    rotatedBlock.portsList = [
+                        new Port(false, 0, surBlock[0], "none", false),
+                        new Port(false, 0, surBlock[1], "output", true),
+                        new Port(false, 0, surBlock[2], "none", false),
+                        new Port(false, 0, surBlock[3], "input", true)
+                    ];
+                } else if (newDir === 13) { // South output
+                    rotatedBlock.portsList = [
+                        new Port(false, 0, surBlock[0], "input", true),
+                        new Port(false, 0, surBlock[1], "none", false),
+                        new Port(false, 0, surBlock[2], "output", true),
+                        new Port(false, 0, surBlock[3], "none", false)
+                    ];
+                } else if (newDir === 24) { // West output
+                    rotatedBlock.portsList = [
+                        new Port(false, 0, surBlock[0], "none", false),
+                        new Port(false, 0, surBlock[1], "input", true),
+                        new Port(false, 0, surBlock[2], "none", false),
+                        new Port(false, 0, surBlock[3], "output", true)
+                    ];
+                }
+            } else if (blockType === 'redstone_comparator') {
+                // Update comparator ports based on new direction
+                const surBlock = [
+                    (r > 0) ? blocksV1[r-1][c].getBlockType() : "air",
+                    (c < gridX-1) ? blocksV1[r][c+1].getBlockType() : "air",
+                    (r < gridY-1) ? blocksV1[r+1][c].getBlockType() : "air",
+                    (c > 0) ? blocksV1[r][c-1].getBlockType() : "air"
+                ];
+                
+                if (newDir === 31) { // North output
+                    rotatedBlock.portsList = [
+                        new Port(false, 0, surBlock[0], "output", true),
+                        new Port(false, 0, surBlock[1], "input", true),
+                        new Port(false, 0, surBlock[2], "input", true),
+                        new Port(false, 0, surBlock[3], "input", true)
+                    ];
+                } else if (newDir === 42) { // East output
+                    rotatedBlock.portsList = [
+                        new Port(false, 0, surBlock[0], "input", true),
+                        new Port(false, 0, surBlock[1], "output", true),
+                        new Port(false, 0, surBlock[2], "input", true),
+                        new Port(false, 0, surBlock[3], "input", true)
+                    ];
+                } else if (newDir === 13) { // South output
+                    rotatedBlock.portsList = [
+                        new Port(false, 0, surBlock[0], "input", true),
+                        new Port(false, 0, surBlock[1], "input", true),
+                        new Port(false, 0, surBlock[2], "output", true),
+                        new Port(false, 0, surBlock[3], "input", true)
+                    ];
+                } else if (newDir === 24) { // West output
+                    rotatedBlock.portsList = [
+                        new Port(false, 0, surBlock[0], "input", true),
+                        new Port(false, 0, surBlock[1], "input", true),
+                        new Port(false, 0, surBlock[2], "input", true),
+                        new Port(false, 0, surBlock[3], "output", true)
+                    ];
+                }
+            }
+            
+            // Update the image path
+            rotatedBlock.setImg();
+            blocksV1[r][c] = rotatedBlock;
+            update();
+        } else {
+            alert("Book can only be used on repeaters and comparators!");
+        }
+        return;
+    }
+    
+    // Handle air placement (free, no inventory cost)
+    if (optData === 'air') {
+        // Get the current block type before replacing with air
+        const currentBlockType = blocksV1[r][c].getBlockType();
+        
+        // If the current block is not air and not a locked block, return its item to inventory
+        if (currentBlockType !== 'air' && !lockedCells.has(`${r},${c}`)) {
+            // Check if it's a block that costs inventory (not redstone_block or lamp if they're start blocks)
+            if (currentBlockType !== 'redstone_block' && currentBlockType !== 'redstone_lamp') {
+                // Return the item to inventory
+                if (inventory.hasOwnProperty(currentBlockType)) {
+                    inventory[currentBlockType]++;
+                }
+            }
+        }
+        
+        // Place air
+        blocksV1[r][c] = genBlock(optData, r, c);
+        
+        // Update inventory display
+        updateInventoryDisplay();
+        update();
+        return;
+    }
+    
+    // Check inventory for other items
+    if (useInventoryItem(optData)) {
+        // Get the current block type before replacing
+        const currentBlockType = blocksV1[r][c].getBlockType();
+        
+        // If the current block is not air and not a locked block, return its item to inventory
+        if (currentBlockType !== 'air' && !lockedCells.has(`${r},${c}`)) {
+            // Check if it's a block that costs inventory (not redstone_block or lamp if they're start blocks)
+            if (currentBlockType !== 'redstone_block' && currentBlockType !== 'redstone_lamp') {
+                // Return the item to inventory
+                if (inventory.hasOwnProperty(currentBlockType)) {
+                    inventory[currentBlockType]++;
+                }
+            }
+        }
+        
+        blocksV1[r][c] = genBlock(optData, r, c);
+        updateInventoryDisplay();
+        update();
+    } else {
+        alert(`No ${formatItemName(optData)} left!`);
+    }
+};
+
+// Then find your useInventoryItem function and replace it with this:
+function useInventoryItem(itemType) {
+    // Book and air are unlimited (always return true)
+    if (itemType === 'book' || itemType === 'air') {
+        return true;
+    }
+    
+    // Check if item exists in inventory and has count > 0
+    if (inventory.hasOwnProperty(itemType) && inventory[itemType] > 0) {
+        inventory[itemType]--;
+        updateInventoryDisplay();
+        return true;
+    }
+    return false;
+}
+
+//----------------------- Initialize on Load ------------------------
+
+document.addEventListener("DOMContentLoaded", function() {
+    console.log("Initializing game...");
+    
+    // Create level selector buttons
+    initializeLevelSelector();
+    
+    // Load first level
+    if (levels.length > 0) {
+        setTimeout(() => loadLevel(0), 100);
+    }
+});
 
 /*
 //SECTION API
