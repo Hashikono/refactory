@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Re:factory :D</title>
+        <link rel="stylesheet" type="text/css" href="css/styles.css">
+        <script type="text/javascript" src="js/main.js"></script>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Re:factory</h1>
+            <h3>Redstone Circuit Puzzles</h3>
+            
+            <!-- Level selector will be dynamically populated by JavaScript -->
+            <div class="level-selector" id="levelSelector"></div>
+            
+            <!-- Level description -->
+            <div id="levelDescription"></div>
+            
+            <!-- Block palette with inventory counts -->
+            <div class="block-palette" id="blockPalette">
+                <!-- 1.1 Redstone Block -->
+                <div class="options" data-opt="redstone_block" title="Redstone Block">
+                    <img src="images/redstone_block_1234_1_off.png" alt="Redstone Block">
+                </div>
+
+                <!-- 1.2 Redstone Dust -->
+                <div class="options" data-opt="redstone_dust" title="Redstone Dust">
+                    <img src="images/redstone_dust_1234_1_off.png" alt="Redstone Dust">
+                </div>
+                
+                <!-- 1.3 Redstone Repeator -->
+                <div class="options" data-opt="redstone_repeator" title="Redstone Repeator">
+                    <img src="images/redstone_repeator_31_1_off.png" alt="Redstone Repeator">
+                </div>
+
+                <!-- 1.4 Redstone Comparator -->
+                <div class="options" data-opt="redstone_comparator" title="Redstone Comparator">
+                    <img src="images/redstone_comparator_31_1_off.png" alt="Redstone Comparator">
+                </div>
+
+                <!-- 1.5 Redstone Lamp -->
+                <div class="options" data-opt="redstone_lamp" title="Redstone Lamp">
+                    <img src="images/redstone_lamp_1234_1_off.png" alt="Redstone Lamp">
+                </div>
+
+                <!-- 2.10 Cobblestone -->
+                <div class="options" data-opt="cobblestone" title="Cobblestone">
+                    <img src="images/cobblestone_1234_1_off.png" alt="Cobblestone">
+                </div>
+
+                <!-- 2.11 Air -->
+                <div class="options" data-opt="air" title="Air">
+                    <img src="images/air_1234_1_off.png" alt="Air">
+                </div>
+
+                <!-- 2.01 Placeholder -->
+                <div style="display: none;" class="block-placeholder"></div> 
+                <div style="display: none;" class="block-placeholder"></div> 
+                <div style="display: none;" class="block-placeholder"></div> 
+
+                <!-- 3.12 Stick (hidden by default) -->
+                <div style="display: none;" class="options" data-opt="stick" title="Stick">
+                    <img src="images/stick.png" alt="Stick">
+                </div>
+
+                <!-- 3.13 Book -->
+                <div class="options" data-opt="book" title="Book (Rotate)">
+                    <img src="images/book.png" alt="Book">
+                </div>
+            </div>
+
+            <!-- Button container -->
+            <div class="button-container">
+                <button id="submitBtn" onclick="submitSolution()">Test</button>
+                <button id="resetBtn" onclick="reset()">Reset</button>
+            </div>
+
+            <!-- Grid generation -->
+            <div class="placement-grid" id="placementGrid"></div>
+            
+            <!-- Hidden update buttons (kept for compatibility but hidden) -->
+            <button style="display: none;" id="wupdate" onclick="wUpdate()">Update (∞)</button>
+            <button style="display: none;" id="oupdate" onclick="supdate()">Update (spam)</button>
+        </div>
+
+        <script>
+            // Add inventory count badges to palette items on load
+            document.addEventListener('DOMContentLoaded', function() {
+                // Add count badges to all option elements
+                document.querySelectorAll('.options[data-opt]').forEach(option => {
+                    const optType = option.dataset.opt;
+                    
+                    // Create badge for all items except placeholders
+                    const badge = document.createElement('span');
+                    badge.className = 'inventory-count';
+                    badge.id = `count-${optType}`;
+                    
+                    // Set initial text and colors based on item type
+                    if (optType === 'book' || optType === 'air') {
+                        badge.textContent = '∞';
+                        badge.style.background = optType === 'book' ? '#9c27b0' : '#666';
+                    } else {
+                        badge.textContent = '0';
+                        badge.style.background = '#4CAF50';
+                    }
+                    
+                    option.appendChild(badge);
+                });
+            });
+
+            // Update the updateInventoryDisplay function to modify badge counts only
+            function updateInventoryDisplay() {
+                // Update palette item visibility and count badges
+                document.querySelectorAll('.options[data-opt]').forEach(option => {
+                    const optType = option.dataset.opt;
+                    
+                    // Skip book and air (always available)
+                    if (optType === 'book' || optType === 'air') {
+                        option.classList.remove('inventory-empty');
+                        return;
+                    }
+                    
+                    const count = inventory[optType] || 0;
+                    const badge = document.getElementById(`count-${optType}`);
+                    
+                    if (badge) {
+                        badge.textContent = count;
+                        
+                        // Update badge color based on count
+                        if (count <= 0) {
+                            badge.style.background = '#8b0000';
+                        } else {
+                            badge.style.background = '#4CAF50';
+                        }
+                    }
+                    
+                    if (count <= 0) {
+                        option.classList.add('inventory-empty');
+                    } else {
+                        option.classList.remove('inventory-empty');
+                    }
+                });
+            }
+        </script>
+    </body>
+</html>
